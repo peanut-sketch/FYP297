@@ -92,7 +92,25 @@ th { color: var(--ink-2); font-weight: 600; position: sticky; top: 0; background
 .empty { color: var(--muted); padding: 8px 0; }
 footer { color: var(--muted); font-size: 12px; margin-top: 8px; }
 footer a { color: inherit; }
-@media (max-width: 520px) { .meta { text-align: left; } .tile .val { font-size: 22px; } }
+.hdr-r { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.btn, .dl > summary { font: inherit; font-size: 12.5px; color: var(--ink); background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 5px 11px; cursor: pointer; }
+.btn:hover, .dl > summary:hover { background: var(--page); }
+.dl { position: relative; margin: 0; font-size: 13px; }
+.dl > summary { list-style: none; display: inline-flex; align-items: center; gap: 6px; width: auto; }
+.dl > summary::-webkit-details-marker { display: none; }
+.dl-panel { position: absolute; right: 0; top: calc(100% + 6px); z-index: 5; width: 320px; max-width: calc(100vw - 40px);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.14); padding: 6px; }
+.dl-panel .h { color: var(--muted); font-size: 11.5px; padding: 6px 10px 2px; }
+.dl-panel button, .dl-panel a { display: block; width: 100%; text-align: left; padding: 6px 10px; border: 0; border-radius: 6px;
+  background: none; color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; text-decoration: none; }
+.dl-panel button:hover, .dl-panel a:hover { background: var(--page); }
+.dl-panel small { display: block; color: var(--muted); font-size: 11.5px; }
+.dl-panel hr { border: 0; border-top: 1px solid var(--grid); margin: 4px 0; }
+.cf { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-top: 6px; }
+.cf details { margin-top: 0; flex: 1; min-width: 0; }
+.cf .btn { flex: none; font-size: 12px; padding: 3px 9px; color: var(--ink-2); }
+@media (max-width: 520px) { .meta { text-align: left; } .hdr-r { align-items: flex-start; } .dl-panel { left: 0; right: auto; } .tile .val { font-size: 22px; } }
 </style>
 </head>
 <body>
@@ -102,7 +120,13 @@ footer a { color: inherit; }
       <h1>Singapore Solar PV Digital Twin</h1>
       <p class="sub">National fleet nowcast, 48-hour forecast, household loads and fault checks</p>
     </div>
-    <div class="meta" id="meta">Loading…</div>
+    <div class="hdr-r">
+      <div class="meta" id="meta">Loading…</div>
+      <details class="dl" id="dl" hidden>
+        <summary><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0L4.5 6.5M8 10l3.5-3.5M2.5 13.5h11" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Download data</summary>
+        <div class="dl-panel" id="dl-panel"></div>
+      </details>
+    </div>
   </header>
 
   <section class="tiles" id="tiles"></section>
@@ -112,7 +136,7 @@ footer a { color: inherit; }
     <p class="desc" id="fleet-desc">Physics twin driven by the weather forecast, compared with the machine-learning forecast.</p>
     <div class="legend" id="fleet-leg"></div>
     <div class="chart" id="fleet"></div>
-    <details><summary>Show data table</summary><div class="tbl" id="fleet-tbl"></div></details>
+    <div class="cf"><details><summary>Show data table</summary><div class="tbl" id="fleet-tbl"></div></details><button class="btn" data-k="fleet" hidden>Download CSV</button></div>
   </section>
 
   <div class="grid2">
@@ -120,14 +144,14 @@ footer a { color: inherit; }
       <h2>Solar share of system demand</h2>
       <p class="desc" id="share-desc"></p>
       <div class="chart" id="share"></div>
-      <details><summary>Show data table</summary><div class="tbl" id="share-tbl"></div></details>
+      <div class="cf"><details><summary>Show data table</summary><div class="tbl" id="share-tbl"></div></details><button class="btn" data-k="twin" hidden>Download CSV</button></div>
     </section>
     <section class="card">
       <h2>Fixed tilt vs single-axis tracker</h2>
       <p class="desc">Output per kWp installed. Trackers follow the sun east to west.</p>
       <div class="legend" id="track-leg"></div>
       <div class="chart" id="track"></div>
-      <details><summary>Show data table</summary><div class="tbl" id="track-tbl"></div></details>
+      <div class="cf"><details><summary>Show data table</summary><div class="tbl" id="track-tbl"></div></details><button class="btn" data-k="twin" hidden>Download CSV</button></div>
     </section>
   </div>
 
@@ -136,12 +160,13 @@ footer a { color: inherit; }
       <h2>Forecast accuracy</h2>
       <p class="desc" id="acc-desc"></p>
       <div id="acc"></div>
-      <details><summary>All metrics</summary><div class="tbl" id="acc-tbl"></div></details>
+      <div class="cf"><details><summary>All metrics</summary><div class="tbl" id="acc-tbl"></div></details><button class="btn" data-k="metrics" hidden>Download CSV</button></div>
     </section>
     <section class="card">
       <h2>Fault check</h2>
       <p class="desc">Measured bench output compared with what the twin expects.</p>
       <div id="faults"><div class="empty">Loading…</div></div>
+      <div class="cf"><span></span><button class="btn" data-k="faults" hidden>Download CSV</button></div>
     </section>
   </div>
 
@@ -152,13 +177,13 @@ footer a { color: inherit; }
       <div>
         <div class="legend" id="loads-leg"></div>
         <div class="chart" id="loads"></div>
-        <details><summary>Show data table</summary><div class="tbl" id="loads-tbl"></div></details>
+        <div class="cf"><details><summary>Show data table</summary><div class="tbl" id="loads-tbl"></div></details><button class="btn" data-k="profiles" hidden>Download CSV</button></div>
       </div>
       <div>
         <h2 style="font-size:13.5px">Self-sufficiency (share of load met by PV)</h2>
         <div class="legend" id="ss-leg" style="margin-top:6px"></div>
         <div id="ss"></div>
-        <details><summary>All results</summary><div class="tbl" id="ss-tbl"></div></details>
+        <div class="cf"><details><summary>All results</summary><div class="tbl" id="ss-tbl"></div></details><button class="btn" data-k="results" hidden>Download CSV</button></div>
       </div>
     </div>
   </section>
@@ -277,6 +302,70 @@ function hbars(el, groups, series, max = 100, fmt = v => nf(1).format(v) + "%") 
   }</div>`).join("")}</div>`;
 }
 
+/* ---- Downloads: every dataset as CSV (plain numbers, full SGT timestamps) plus the raw JSON files ---- */
+const DATA = {}; let STAMP = "sg-solar";
+const isoSG = t => new Date(t + SGT).toISOString().slice(0, 16).replace("T", " ");
+const csvCell = v => v == null || (typeof v === "number" && !Number.isFinite(v)) ? ""
+  : /[",\r\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
+function saveFile(name, text, type) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = Object.assign(document.createElement("a"), { href: url, download: name });
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+function downloadCsv(k) {
+  const d = DATA[k]; if (!d) return;
+  const body = [d.head, ...d.rows].map(r => r.map(csvCell).join(",")).join("\r\n");
+  saveFile(`${STAMP}_${d.file}.csv`, "﻿" + body, "text/csv;charset=utf-8");   // BOM so Excel reads UTF-8
+}
+function buildDownloads(L, F, LD, FT) {
+  STAMP = "sg-solar_" + String(L.generated).slice(0, 10);
+  const tx = L.times.map(Date.parse), W = L.weather || {};
+  DATA.twin = { label: "Twin time series", note: "30-min fleet MW, demand, solar share, kW/kWp, weather", file: "twin_timeseries",
+    head: ["time_sgt", "fleet_mw", "demand_mw", "solar_share_pct", "fixed_kw_per_kwp", "tracker_kw_per_kwp", "ghi_wm2", "temp_air_c"],
+    rows: tx.map((t, i) => [isoSG(t), L.fleet_mw[i], L.demand_mw[i], L.solar_share_pct?.[i], L.kw_per_kwp.fixed[i], L.kw_per_kwp.tracker?.[i], W.ghi?.[i], W.temp_air?.[i]]) };
+  if (L.daily) DATA.daily = { label: "Daily summary", note: "Energy, peak and yield for today and tomorrow", file: "daily_summary",
+    head: ["day", "fleet_gwh", "peak_mw", "peak_share_pct", "fixed_kwh_per_kwp", "tracker_kwh_per_kwp"],
+    rows: Object.entries(L.daily).map(([d, v]) => [d, v.fleet_gwh, v.peak_mw, v.peak_share_pct, v.fixed_kwh_per_kwp, v.tracker_kwh_per_kwp]) };
+  const fx = F ? F.times.map(Date.parse) : [];
+  const allT = [...new Set([...tx, ...fx])].sort((a, b) => a - b);
+  DATA.fleet = { label: "Fleet output: twin vs ML", note: "Both fleet curves on one time axis", file: "fleet_twin_vs_ml",
+    head: ["time_sgt", "twin_fleet_mw", "ml_forecast_fleet_mw"],
+    rows: allT.map(t => { const i = tx.indexOf(t), j = fx.indexOf(t); return [isoSG(t), i >= 0 ? L.fleet_mw[i] : null, j >= 0 ? F.fleet_mw[j] : null]; }) };
+  if (F) {
+    DATA.ml = { label: "ML forecast", note: "Hourly fleet forecast for the next ~48 h", file: "ml_forecast",
+      head: ["time_sgt", "kw_per_kwp", "fleet_mw"], rows: fx.map((t, i) => [isoSG(t), F.kw_per_kwp[i], F.fleet_mw[i]]) };
+    DATA.metrics = { label: "Forecast accuracy", note: `Held-out ${F.holdout_days} days, model vs baselines`, file: "forecast_metrics",
+      head: ["method", "rmse_kw_per_kwp", "nmae_pct", "mape_daylight_pct", "holdout_days", "target"],
+      rows: Object.entries(F.metrics).map(([k, v]) => [k, v.rmse_kw_per_kwp, v.nmae_pct, v.mape_daylight_pct, F.holdout_days, F.target]) };
+  }
+  if (LD) {
+    const n = LD.profiles_kw.residential.length;
+    DATA.profiles = { label: "Load profiles", note: "Residential, commercial and bench PV, 30-min, watts", file: "load_profiles",
+      head: ["time", "residential_w", "commercial_w", "bench_pv_w_today"],
+      rows: Array.from({ length: n }, (_, i) => [hhmm(i * .5), +(LD.profiles_kw.residential[i] * 1000).toFixed(1), +(LD.profiles_kw.commercial[i] * 1000).toFixed(1),
+        +(L.kw_per_kwp.fixed[i] * LD.bench_kwp * 1000).toFixed(1)]) };
+    DATA.results = { label: "Battery results", note: "Self-consumption and self-sufficiency, with and without battery", file: "load_results",
+      head: ["profile", "case", "self_consumption_pct", "self_sufficiency_pct", "grid_import_kwh_day", "export_kwh_day", "pv_kwh_day", "load_kwh_day"],
+      rows: Object.entries(LD.results).flatMap(([p, r]) => ["no_battery", "battery_1kwh"].map(c =>
+        [p, c, r[c].self_consumption_pct, r[c].self_sufficiency_pct, r[c].grid_import_kwh_day, r[c].export_kwh_day, r.pv_kwh_day, r.load_kwh_day])) };
+  }
+  if (FT) DATA.faults = { label: "Fault events", note: `${FT.events.length} event(s), status ${FT.status}`, file: "fault_events",
+    head: ["type", "start", "end", "loss_pct", "hours", "note"],
+    rows: FT.events.map(e => [e.type, e.start, e.end, e.loss_pct, (e.hours || []).join(" "), e.note]) };
+
+  const raw = [["latest", L], ["forecast", F], ["loads", LD], ["faults", FT]].filter(([, v]) => v);
+  $("dl-panel").innerHTML = `<div class="h">Spreadsheet (CSV)</div>` +
+    Object.entries(DATA).map(([k, d]) => `<button type="button" data-k="${k}">${esc(d.label)}<small>${esc(d.note)}</small></button>`).join("") +
+    `<hr><div class="h">Raw files (JSON)</div>` +
+    raw.map(([n]) => `<a href="data/${n}.json" download="${STAMP}_${n}.json">${n}.json</a>`).join("");
+  $("dl").hidden = false;
+  document.querySelectorAll(".cf .btn[data-k]").forEach(b => { b.hidden = !DATA[b.dataset.k]; });
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-k]"); if (b) { downloadCsv(b.dataset.k); $("dl").open = false; }
+    else if (!$("dl").contains(e.target)) $("dl").open = false;
+  });
+}
+
 const css = v => `var(${v})`;
 function nightSpans(x0, x1) {             // SG sunrise ~07:00, sunset ~19:10 year-round
   const out = []; let d = Math.floor((x0 + SGT) / (24 * H)) * 24 * H - SGT;
@@ -388,6 +477,7 @@ async function main() {
       prof.flatMap(p => [["no_battery", "No battery"], ["battery_1kwh", "1 kWh battery"]].map(([k, lab]) =>
         [p, lab, nf(1).format(R[p][k].self_consumption_pct), nf(1).format(R[p][k].self_sufficiency_pct), nf(2).format(R[p][k].grid_import_kwh_day), nf(2).format(R[p][k].export_kwh_day)])));
   } else $("loads").innerHTML = `<div class="empty">No load results yet. Run <code>python loads.py</code>.</div>`;
+  buildDownloads(L, F, LD, FT);
 }
 main();
 </script>

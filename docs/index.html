@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SG Solar Twin</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --border: rgba(11,11,11,.10);
+  --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+  --good: #0ca30c; --warning: #fab219; --critical: #d03b3b;
+  --wash: .10; --night: rgba(11,11,11,.035);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --border: rgba(255,255,255,.10);
+    --ink: #f0efec; --ink-2: #c3c2b7; --grid: #2c2c2a; --axis: #383835;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --wash: .16; --night: rgba(0,0,0,.28);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d; --surface: #1a1a19; --border: rgba(255,255,255,.10);
+  --ink: #f0efec; --ink-2: #c3c2b7; --grid: #2c2c2a; --axis: #383835;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --wash: .16; --night: rgba(0,0,0,.28);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 28px 20px 56px; }
+header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 8px 24px; margin-bottom: 20px; }
+h1 { font-size: 22px; font-weight: 650; margin: 0; letter-spacing: -.01em; }
+h2 { font-size: 15px; font-weight: 600; margin: 0; }
+.sub { color: var(--ink-2); margin: 2px 0 0; }
+.meta { color: var(--muted); font-size: 12.5px; text-align: right; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.tile, .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.tile { padding: 14px 16px; }
+.tile .lab { color: var(--ink-2); font-size: 12.5px; }
+.tile .val { font-size: 26px; font-weight: 600; margin-top: 2px; letter-spacing: -.01em; }
+.tile .val small { font-size: 14px; font-weight: 500; color: var(--ink-2); margin-left: 3px; }
+.tile .note { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 16px; margin-bottom: 16px; }
+.card { padding: 16px 18px 12px; min-width: 0; }
+.card.full { margin-bottom: 16px; }
+.card .desc { color: var(--ink-2); font-size: 13px; margin: 2px 0 10px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0 0 6px; font-size: 12.5px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.key { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+.key.dot { width: 10px; height: 10px; border-radius: 3px; }
+.chart { position: relative; width: 100%; }
+.chart svg { display: block; overflow: visible; }
+.chart text { font: 11px system-ui, -apple-system, "Segoe UI", sans-serif; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.chart .gl { stroke: var(--grid); stroke-width: 1; }
+.chart .ax { stroke: var(--axis); stroke-width: 1; }
+.chart .now { stroke: var(--ink-2); stroke-width: 1; }
+.chart .now-l { fill: var(--ink-2); }
+.chart .night { fill: var(--night); }
+.chart .ln { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .cross { stroke: var(--axis); stroke-width: 1; }
+.chart .hit { fill: transparent; cursor: crosshair; touch-action: pan-y; }
+.chart .pt { stroke: var(--surface); stroke-width: 2; }
+.tip { position: absolute; top: 4px; pointer-events: none; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 10px; font-size: 12px; box-shadow: 0 4px 14px rgba(0,0,0,.10); white-space: nowrap; z-index: 2; }
+.tip b { display: block; font-weight: 600; margin-bottom: 3px; }
+.tip div { display: flex; align-items: center; gap: 6px; color: var(--ink-2); }
+.tip div em { font-style: normal; color: var(--ink); margin-left: auto; padding-left: 12px; font-variant-numeric: tabular-nums; }
+details { margin-top: 6px; font-size: 12.5px; }
+summary { color: var(--muted); cursor: pointer; width: max-content; }
+.tbl { overflow-x: auto; max-height: 260px; overflow-y: auto; margin-top: 6px; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 5px 8px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--ink-2); font-weight: 600; position: sticky; top: 0; background: var(--surface); }
+.bars { display: grid; grid-template-columns: max-content 1fr; gap: 6px 12px; align-items: center; margin: 4px 0 6px; }
+.bars .rl { color: var(--ink-2); font-size: 12.5px; }
+.bars .track { display: flex; flex-direction: column; gap: 3px; }
+.bars .bar { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.bars .fill { height: 14px; border-radius: 0 4px 4px 0; min-width: 2px; }
+.callout { background: var(--page); border-radius: 8px; padding: 8px 12px; color: var(--ink-2); font-size: 12.5px; margin: 8px 0 4px; }
+.status { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.status svg { flex: none; }
+.ev { border-top: 1px solid var(--grid); padding: 10px 0; }
+.ev:first-of-type { border-top: 0; }
+.ev .t { font-weight: 600; text-transform: capitalize; }
+.ev .w { color: var(--muted); font-size: 12.5px; }
+.ev p { margin: 2px 0 0; color: var(--ink-2); font-size: 13px; }
+.empty { color: var(--muted); padding: 8px 0; }
+footer { color: var(--muted); font-size: 12px; margin-top: 8px; }
+footer a { color: inherit; }
+@media (max-width: 520px) { .meta { text-align: left; } .tile .val { font-size: 22px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Singapore Solar PV Digital Twin</h1>
+      <p class="sub">National fleet nowcast, 48-hour forecast, household loads and fault checks</p>
+    </div>
+    <div class="meta" id="meta">Loading…</div>
+  </header>
+
+  <section class="tiles" id="tiles"></section>
+
+  <section class="card full">
+    <h2>Fleet output</h2>
+    <p class="desc" id="fleet-desc">Physics twin driven by the weather forecast, compared with the machine-learning forecast.</p>
+    <div class="legend" id="fleet-leg"></div>
+    <div class="chart" id="fleet"></div>
+    <details><summary>Show data table</summary><div class="tbl" id="fleet-tbl"></div></details>
+  </section>
+
+  <div class="grid2">
+    <section class="card">
+      <h2>Solar share of system demand</h2>
+      <p class="desc" id="share-desc"></p>
+      <div class="chart" id="share"></div>
+      <details><summary>Show data table</summary><div class="tbl" id="share-tbl"></div></details>
+    </section>
+    <section class="card">
+      <h2>Fixed tilt vs single-axis tracker</h2>
+      <p class="desc">Output per kWp installed. Trackers follow the sun east to west.</p>
+      <div class="legend" id="track-leg"></div>
+      <div class="chart" id="track"></div>
+      <details><summary>Show data table</summary><div class="tbl" id="track-tbl"></div></details>
+    </section>
+  </div>
+
+  <div class="grid2">
+    <section class="card">
+      <h2>Forecast accuracy</h2>
+      <p class="desc" id="acc-desc"></p>
+      <div id="acc"></div>
+      <details><summary>All metrics</summary><div class="tbl" id="acc-tbl"></div></details>
+    </section>
+    <section class="card">
+      <h2>Fault check</h2>
+      <p class="desc">Measured bench output compared with what the twin expects.</p>
+      <div id="faults"><div class="empty">Loading…</div></div>
+    </section>
+  </div>
+
+  <section class="card full">
+    <h2>Household and commercial loads vs bench PV</h2>
+    <p class="desc" id="loads-desc"></p>
+    <div class="grid2" style="margin:0">
+      <div>
+        <div class="legend" id="loads-leg"></div>
+        <div class="chart" id="loads"></div>
+        <details><summary>Show data table</summary><div class="tbl" id="loads-tbl"></div></details>
+      </div>
+      <div>
+        <h2 style="font-size:13.5px">Self-sufficiency (share of load met by PV)</h2>
+        <div class="legend" id="ss-leg" style="margin-top:6px"></div>
+        <div id="ss"></div>
+        <details><summary>All results</summary><div class="tbl" id="ss-tbl"></div></details>
+      </div>
+    </div>
+  </section>
+
+  <footer id="foot">Weather: <a href="https://open-meteo.com/">Open-Meteo</a>. Model: pvlib. Adapted from cindyiskandar/digital-twin-solar-pv.</footer>
+</div>
+
+<script>
+const TZ = "Asia/Singapore", H = 3600e3, SGT = 8 * H;   // Singapore is UTC+8, no daylight saving
+const nf = (d = 0) => new Intl.NumberFormat("en-SG", { maximumFractionDigits: d, minimumFractionDigits: d });
+const fTip = new Intl.DateTimeFormat("en-SG", { timeZone: TZ, weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false });
+const fDay = new Intl.DateTimeFormat("en-SG", { timeZone: TZ, weekday: "short", day: "numeric", month: "short" });
+const fGen = new Intl.DateTimeFormat("en-SG", { timeZone: TZ, dateStyle: "medium", timeStyle: "short", hour12: false });
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const sgHour = ms => (((ms + SGT) % (24 * H)) + 24 * H) % (24 * H) / H;
+const hhmm = h => String(Math.floor(h)).padStart(2, "0") + ":" + String(Math.round((h % 1) * 60)).padStart(2, "0");
+
+async function get(name) {
+  try { const r = await fetch(`data/${name}.json`, { cache: "no-store" }); return r.ok ? await r.json() : null; }
+  catch { return null; }
+}
+
+function niceTicks(max, n = 4) {
+  if (!(max > 0)) max = 1;
+  const raw = max / n, p = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * p).find(s => s >= raw);
+  const out = []; for (let v = 0; v <= Math.ceil(max / step) * step + 1e-9; v += step) out.push(+v.toFixed(10));
+  return out;
+}
+
+function timeTicks(xmin, xmax, every = 6) {
+  const out = [], step = every * H;
+  for (let t = Math.ceil((xmin + SGT) / step) * step - SGT; t <= xmax; t += step) {
+    const h = Math.round(sgHour(t));
+    out.push({ v: t, label: h === 0 ? fDay.format(t).replace(",", "") : hhmm(h) });
+  }
+  return out;
+}
+
+function legend(el, items, dot = false) {
+  $(el).innerHTML = items.map(s => `<span><i class="key${dot ? " dot" : ""}" style="background:${s.color}"></i>${esc(s.name)}</span>`).join("");
+}
+
+function table(el, head, rows) {
+  $(el).innerHTML = `<table><thead><tr>${head.map(h => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${
+    rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+}
+
+/* Line chart: series [{name, color, x[], y[], area}], extra [{name, x[], y[], fmt}] (tooltip only). */
+function lineChart(el, o) {
+  const box = $(el); let lastW = 0;
+  const draw = () => {
+    const W = box.clientWidth || 600; if (W === lastW) return; lastW = W;
+    const Ht = o.height || 240, m = { l: 46, r: 14, t: 16, b: 26 }, iw = W - m.l - m.r, ih = Ht - m.t - m.b;
+    const X = v => m.l + (v - o.xmin) / (o.xmax - o.xmin) * iw;
+    const yt = niceTicks(Math.max(...o.series.flatMap(s => s.y.filter(Number.isFinite)))), top = yt.at(-1);
+    const Y = v => m.t + ih - v / top * ih;
+    let s = `<svg width="${W}" height="${Ht}" viewBox="0 0 ${W} ${Ht}" role="img" aria-label="${esc(o.label)}">`;
+    for (const [a, b] of o.night || []) {             // shade night-time so the day/night rhythm reads at a glance
+      const x0 = X(Math.max(a, o.xmin)), x1 = X(Math.min(b, o.xmax));
+      if (x1 > x0) s += `<rect class="night" x="${x0}" y="${m.t}" width="${x1 - x0}" height="${ih}"/>`;
+    }
+    for (const v of yt) s += `<line class="${v ? "gl" : "ax"}" x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}"/>` +
+      `<text x="${m.l - 8}" y="${Y(v)}" dy=".32em" text-anchor="end">${o.yFmt(v)}</text>`;
+    let ticks = o.xTicks; const room = iw / Math.max(ticks.length, 1);
+    if (room < 52) { const k = [2, 4, 8].find(k => room * k >= 52) || 8; ticks = ticks.filter((_, i) => i % k === 0); }  // keep ticks on 12 h / day boundaries
+    for (const t of ticks) s += `<text x="${X(t.v)}" y="${Ht - 6}" text-anchor="middle">${t.label}</text>`;
+    if (o.now && o.now > o.xmin && o.now < o.xmax)
+      s += `<line class="now" x1="${X(o.now)}" x2="${X(o.now)}" y1="${m.t - 4}" y2="${m.t + ih}"/><text class="now-l" x="${X(o.now) + 4}" y="${m.t - 6}">now</text>`;
+    for (const se of o.series) {
+      let d = "", pen = false;
+      se.x.forEach((x, i) => { const y = se.y[i]; if (!Number.isFinite(y) || x < o.xmin || x > o.xmax) { pen = false; return; }
+        d += `${pen ? "L" : "M"}${X(x).toFixed(1)},${Y(y).toFixed(1)}`; pen = true; });
+      if (se.area && d) {
+        const xs = se.x.filter((x, i) => Number.isFinite(se.y[i]) && x >= o.xmin && x <= o.xmax);
+        s += `<path d="${d}L${X(xs.at(-1)).toFixed(1)},${Y(0)}L${X(xs[0]).toFixed(1)},${Y(0)}Z" fill="${se.color}" fill-opacity="var(--wash)" stroke="none"/>`;
+      }
+      s += `<path class="ln" d="${d}" stroke="${se.color}"${se.dash ? ` stroke-dasharray="${se.dash}"` : ""}/>`;
+    }
+    s += `<line class="cross" y1="${m.t}" y2="${m.t + ih}" visibility="hidden"/>` +
+      o.series.map(se => `<circle class="pt" r="4.5" fill="${se.color}" visibility="hidden"/>`).join("") +
+      `<rect class="hit" x="${m.l}" y="0" width="${iw}" height="${Ht}"/></svg><div class="tip" hidden></div>`;
+    box.innerHTML = s;
+    const svg = box.querySelector("svg"), cross = svg.querySelector(".cross"), pts = svg.querySelectorAll(".pt"), tip = box.querySelector(".tip");
+    const nearest = (xs, v) => { let bi = -1, bd = Infinity; xs.forEach((x, i) => { const d = Math.abs(x - v); if (d < bd) { bd = d; bi = i; } }); return [bi, bd]; };
+    const move = e => {
+      const r = svg.getBoundingClientRect(), px = e.clientX - r.left, v = o.xmin + (px - m.l) / iw * (o.xmax - o.xmin);
+      const tol = o.tol || H;
+      let anchor = null, rows = "";
+      o.series.forEach((se, k) => {
+        const [i, d] = nearest(se.x, v);
+        if (i < 0 || d > tol || !Number.isFinite(se.y[i]) || se.x[i] < o.xmin || se.x[i] > o.xmax) { pts[k].setAttribute("visibility", "hidden"); return; }
+        if (anchor === null) anchor = se.x[i];
+        pts[k].setAttribute("cx", X(se.x[i])); pts[k].setAttribute("cy", Y(se.y[i])); pts[k].setAttribute("visibility", "visible");
+        rows += `<div><i class="key dot" style="background:${se.color}"></i>${esc(se.name)}<em>${o.tipFmt(se.y[i])}</em></div>`;
+      });
+      for (const ex of o.extra || []) { const [i, d] = nearest(ex.x, v); if (i >= 0 && d <= tol) rows += `<div><i class="key dot" style="background:transparent"></i>${esc(ex.name)}<em>${ex.fmt(ex.y[i])}</em></div>`; }
+      if (anchor === null) return leave();
+      cross.setAttribute("x1", X(anchor)); cross.setAttribute("x2", X(anchor)); cross.setAttribute("visibility", "visible");
+      tip.innerHTML = `<b>${o.xFmt(anchor)}</b>${rows}`; tip.hidden = false;
+      const tw = tip.offsetWidth, ax = X(anchor);
+      tip.style.left = (ax + 14 + tw > W ? ax - 14 - tw : ax + 14) + "px";
+    };
+    const leave = () => { tip.hidden = true; cross.setAttribute("visibility", "hidden"); pts.forEach(p => p.setAttribute("visibility", "hidden")); };
+    svg.querySelector(".hit").addEventListener("pointermove", move);
+    svg.querySelector(".hit").addEventListener("pointerdown", move);
+    svg.addEventListener("pointerleave", leave);
+  };
+  draw(); new ResizeObserver(draw).observe(box);
+}
+
+function hbars(el, groups, series, max = 100, fmt = v => nf(1).format(v) + "%") {
+  $(el).innerHTML = `<div class="bars">${groups.map(g => `<div class="rl">${esc(g.label)}</div><div class="track">${
+    series.map((s, k) => `<div class="bar" title="${esc(s.name)}: ${fmt(g.values[k])}"><span class="fill" style="width:calc(${g.values[k] / max} * (100% - 52px));background:${s.color}"></span>${fmt(g.values[k])}</div>`).join("")
+  }</div>`).join("")}</div>`;
+}
+
+const css = v => `var(${v})`;
+function nightSpans(x0, x1) {             // SG sunrise ~07:00, sunset ~19:10 year-round
+  const out = []; let d = Math.floor((x0 + SGT) / (24 * H)) * 24 * H - SGT;
+  for (; d < x1; d += 24 * H) out.push([d - 4.85 * H, d + 7 * H]);
+  return out.concat([[d - 4.85 * H, d + 7 * H]]);
+}
+
+async function main() {
+  const [L, F, LD, FT] = await Promise.all(["latest", "forecast", "loads", "faults"].map(get));
+  if (!L) {
+    $("meta").textContent = "No data yet";
+    document.querySelector(".wrap").insertAdjacentHTML("beforeend",
+      `<div class="callout">Couldn't load <code>data/latest.json</code>. Run <code>python twin.py</code>. To view locally, serve the folder (<code>python -m http.server -d docs</code>); browsers block <code>fetch</code> from file:// pages.</div>`);
+    return;
+  }
+  const now = Date.now(), tx = L.times.map(Date.parse), cap = L.installed_capacity_mwp;
+  $("meta").innerHTML = `Updated ${esc(fGen.format(Date.parse(L.generated)))} SGT<br>Weather: ${esc(L.source)}`;
+
+  const T = L.daily.today, M = L.daily.tomorrow;
+  $("tiles").innerHTML = [
+    ["Fleet energy today", nf(1).format(T.fleet_gwh), "GWh", `Tomorrow ${nf(1).format(M.fleet_gwh)} GWh`],
+    ["Peak output today", nf(0).format(T.peak_mw), "MW", `${nf(0).format(T.peak_mw / cap * 100)}% of installed capacity`],
+    ["Peak solar share", nf(1).format(T.peak_share_pct), "%", "of system demand, today"],
+    ["Specific yield today", nf(2).format(T.fixed_kwh_per_kwp), "kWh/kWp", `Tracker ${nf(2).format(T.tracker_kwh_per_kwp)} kWh/kWp`],
+    ["Installed capacity", nf(0).format(cap), "MWp", esc(L.capacity_note || "")],
+  ].map(([l, v, u, n]) => `<div class="tile"><div class="lab">${l}</div><div class="val">${v}<small>${u}</small></div><div class="note">${n}</div></div>`).join("");
+
+  // Fleet output: twin vs ML forecast (same unit, one axis)
+  const fx = F ? F.times.map(Date.parse) : [];
+  const xmin = tx[0] - 15 * 60e3, xmax = Math.max(tx.at(-1) + 15 * 60e3, ...(fx.length ? [fx.at(-1)] : []));
+  const fleetS = [{ name: "Physics twin", color: css("--s1"), x: tx, y: L.fleet_mw, area: true }];
+  if (F) fleetS.push({ name: "ML forecast", color: css("--s2"), x: fx, y: F.fleet_mw });
+  legend("fleet-leg", fleetS);
+  const mw = v => nf(0).format(v) + " MW";
+  lineChart("fleet", { label: "Fleet output in MW over the next two days", series: fleetS, xmin, xmax, xTicks: timeTicks(xmin, xmax),
+    yFmt: v => v >= 1000 ? nf(1).format(v / 1000) + "K" : nf(0).format(v), tipFmt: mw, xFmt: t => fTip.format(t), now, night: nightSpans(xmin, xmax), height: 270 });
+  const allT = [...new Set([...tx, ...fx])].sort((a, b) => a - b);
+  table("fleet-tbl", ["Time (SGT)", "Twin (MW)", "ML forecast (MW)"], allT.map(t => {
+    const i = tx.indexOf(t), j = fx.indexOf(t);
+    return [fTip.format(t), i >= 0 ? nf(0).format(L.fleet_mw[i]) : "", j >= 0 ? nf(0).format(F.fleet_mw[j]) : ""];
+  }).filter(r => r[1] !== "0" || (r[2] && r[2] !== "0")));
+
+  // Solar share of demand
+  const x2min = tx[0] - 15 * 60e3, x2max = tx.at(-1) + 15 * 60e3;
+  $("share-desc").textContent = `Fleet output divided by system demand. Demand: ${L.demand_source}.`;
+  lineChart("share", { label: "Solar share of system demand, percent", series: [{ name: "Solar share", color: css("--s1"), x: tx, y: L.solar_share_pct, area: true }],
+    extra: [{ name: "Fleet", x: tx, y: L.fleet_mw, fmt: mw }, { name: "Demand", x: tx, y: L.demand_mw, fmt: mw }],
+    xmin: x2min, xmax: x2max, xTicks: timeTicks(x2min, x2max, 12), yFmt: v => v + "%", tipFmt: v => nf(1).format(v) + "%",
+    xFmt: t => fTip.format(t), now, night: nightSpans(x2min, x2max), tol: 20 * 60e3 });
+  table("share-tbl", ["Time (SGT)", "Fleet (MW)", "Demand (MW)", "Share (%)"],
+    tx.map((t, i) => [fTip.format(t), nf(0).format(L.fleet_mw[i]), nf(0).format(L.demand_mw[i]), nf(1).format(L.solar_share_pct[i])]).filter(r => r[1] !== "0"));
+
+  // Fixed vs tracker
+  const trS = [{ name: "Fixed tilt", color: css("--s1"), x: tx, y: L.kw_per_kwp.fixed }, { name: "Single-axis tracker", color: css("--s2"), x: tx, y: L.kw_per_kwp.tracker }];
+  legend("track-leg", trS);
+  lineChart("track", { label: "Output per kWp, fixed tilt versus tracker", series: trS, xmin: x2min, xmax: x2max, xTicks: timeTicks(x2min, x2max, 12),
+    yFmt: v => nf(v < 1 && v > 0 ? 1 : 0).format(v), tipFmt: v => nf(3).format(v) + " kW/kWp", xFmt: t => fTip.format(t), now, night: nightSpans(x2min, x2max), tol: 20 * 60e3 });
+  table("track-tbl", ["Time (SGT)", "Fixed (kW/kWp)", "Tracker (kW/kWp)"],
+    tx.map((t, i) => [fTip.format(t), nf(3).format(L.kw_per_kwp.fixed[i]), nf(3).format(L.kw_per_kwp.tracker[i])]).filter(r => r[1] !== "0.000" || r[2] !== "0.000"));
+
+  // Forecast accuracy
+  if (F) {
+    const names = { model: "ML model", persistence_24h: "Persistence (yesterday)", smart_persistence_24h: "Smart persistence" };
+    const keys = Object.keys(F.metrics), mape = keys.map(k => F.metrics[k].mape_daylight_pct);
+    const proxy = /proxy/i.test(F.target);
+    $("acc-desc").textContent = `Daylight MAPE on the last ${F.holdout_days} days, held out from training. Lower is better.`;
+    $("acc").innerHTML = `<div class="bars">${keys.map((k, i) => `<div class="rl">${names[k] || k}</div><div class="bar"><span class="fill" style="width:calc(${mape[i] / Math.max(...mape)} * (100% - 52px));background:${k === "model" ? css("--s1") : css("--axis")}"></span>${nf(1).format(mape[i])}%</div>`).join("")}</div>` +
+      (keys.includes("model") && keys.length > 1 ? `<div class="callout">The model's error is ${nf(0).format((1 - F.metrics.model.mape_daylight_pct / Math.min(...keys.filter(k => k !== "model").map(k => F.metrics[k].mape_daylight_pct))) * 100)}% lower than the best baseline.${
+        proxy ? " Training target is the physics twin, not measured output, so these scores are optimistic until <code>data/measured.csv</code> has at least 14 days." : ""}</div>` : "");
+    table("acc-tbl", ["Method", "RMSE (kW/kWp)", "nMAE (%)", "Daylight MAPE (%)"],
+      keys.map(k => [names[k] || k, nf(4).format(F.metrics[k].rmse_kw_per_kwp), nf(1).format(F.metrics[k].nmae_pct), nf(1).format(F.metrics[k].mape_daylight_pct)]));
+  } else $("acc").innerHTML = `<div class="empty">No forecast yet. Run <code>python forecast.py</code>.</div>`;
+
+  // Faults
+  const icon = ok => ok
+    ? `<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="8" fill="var(--good)"/><path d="M5 9.2l2.6 2.6L13 6.4" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+    : `<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M9 1.5L17 16H1z" fill="var(--critical)"/><path d="M9 7v4" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="13.4" r="1.1" fill="#fff"/></svg>`;
+  if (!FT) $("faults").innerHTML = `<div class="empty">No measured data yet. Add <code>data/measured.csv</code> (timestamp, power_w, irradiance_wm2) and run <code>python faults.py</code>. Until then, <code>python faults.py --selftest</code> checks the detector on synthetic faults.</div>`;
+  else {
+    const ok = !FT.events.length;
+    $("faults").innerHTML = `<div class="status">${icon(ok)}${ok ? "No faults found" : `${FT.events.length} event${FT.events.length > 1 ? "s" : ""} found`}</div>
+      <div class="w" style="color:var(--muted);font-size:12.5px;margin:2px 0 6px">Checked ${esc(fGen.format(Date.parse(FT.generated)))} · ${esc(FT.detail)}</div>` +
+      FT.events.map(e => `<div class="ev"><div class="t">${esc(e.type.replace(/_/g, " "))} <span class="w">· ${esc(String(e.start).slice(0, 16))} to ${esc(String(e.end).slice(0, 16))} · ${nf(1).format(e.loss_pct)}% loss${e.hours ? ` · hours ${e.hours.join(", ")}` : ""}</span></div><p>${esc(e.note)}</p></div>`).join("");
+  }
+
+  // Loads
+  if (LD) {
+    const hx = LD.profiles_kw.residential.map((_, i) => i * .5 + .25);
+    const pvDay = L.kw_per_kwp.fixed.slice(0, 48).map(v => v * LD.bench_kwp * 1000);
+    const ldS = [
+      { name: "Residential load", color: css("--s1"), x: hx, y: LD.profiles_kw.residential.map(v => v * 1000) },
+      { name: "Commercial load", color: css("--s2"), x: hx, y: LD.profiles_kw.commercial.map(v => v * 1000) },
+      { name: `Bench PV (${LD.bench_kwp} kWp, today)`, color: css("--s3"), x: hx, y: pvDay, area: true },
+    ];
+    $("loads-desc").textContent = `Both load profiles use 1 kWh a day. Parametric shapes, not measured data. PV and battery results from ${LD.pv_source}.`;
+    legend("loads-leg", ldS);
+    lineChart("loads", { label: "Load profiles and bench PV in watts across a day", series: ldS, xmin: 0, xmax: 24,
+      xTicks: [0, 6, 12, 18, 24].map(h => ({ v: h, label: hhmm(h) })), yFmt: v => nf(0).format(v), tipFmt: v => nf(0).format(v) + " W",
+      xFmt: h => `${hhmm(h - .25)} to ${hhmm(h + .25)}`, tol: .3 });
+    table("loads-tbl", ["Time", "Residential (W)", "Commercial (W)", "Bench PV (W)"],
+      hx.map((h, i) => [hhmm(h - .25), nf(0).format(ldS[0].y[i]), nf(0).format(ldS[1].y[i]), nf(0).format(pvDay[i])]));
+    const ssS = [{ name: "No battery", color: css("--s1") }, { name: "1 kWh battery", color: css("--s2") }];
+    legend("ss-leg", ssS, true);
+    const R = LD.results, prof = Object.keys(R);
+    hbars("ss", prof.map(p => ({ label: p[0].toUpperCase() + p.slice(1), values: [R[p].no_battery.self_sufficiency_pct, R[p].battery_1kwh.self_sufficiency_pct] })), ssS);
+    const best = prof.reduce((a, p) => R[p].battery_1kwh.self_sufficiency_pct - R[p].no_battery.self_sufficiency_pct > R[a].battery_1kwh.self_sufficiency_pct - R[a].no_battery.self_sufficiency_pct ? p : a);
+    $("ss").insertAdjacentHTML("beforeend", `<div class="callout">The battery helps ${best} loads most: from ${nf(0).format(R[best].no_battery.self_sufficiency_pct)}% to ${nf(0).format(R[best].battery_1kwh.self_sufficiency_pct)}%, because evening demand is served from stored midday solar.</div>`);
+    table("ss-tbl", ["Profile", "Case", "Self-consumption (%)", "Self-sufficiency (%)", "Grid import (kWh/day)", "Export (kWh/day)"],
+      prof.flatMap(p => [["no_battery", "No battery"], ["battery_1kwh", "1 kWh battery"]].map(([k, lab]) =>
+        [p, lab, nf(1).format(R[p][k].self_consumption_pct), nf(1).format(R[p][k].self_sufficiency_pct), nf(2).format(R[p][k].grid_import_kwh_day), nf(2).format(R[p][k].export_kwh_day)])));
+  } else $("loads").innerHTML = `<div class="empty">No load results yet. Run <code>python loads.py</code>.</div>`;
+}
+main();
+</script>
+</body>
+</html>

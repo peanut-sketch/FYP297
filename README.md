@@ -16,6 +16,7 @@ reshape to `data/demand.csv` with columns `timestamp,demand_mw` (30-min, SGT), c
 `installed_capacity_mwp` in config.json from EMA's quarterly statistics.
 
 Local test: `pip install -r requirements.txt && python twin.py` (or `--offline`).
+View the dashboard locally: `python -m http.server -d docs`, then open http://localhost:8000 (browsers block the data files when opening `index.html` directly).
 
 ## Forecasting, faults and loads (added)
 - `python forecast.py`: trains on up to 2 years of Open-Meteo history, forecasts 48 h, reports RMSE / nMAE / MAPE on a held-out final 30 days against persistence baselines. Writes `docs/data/forecast.json`. Add `--synthetic` to test offline.

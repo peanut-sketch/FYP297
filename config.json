@@ -1,0 +1,21 @@
+{
+  "lat": 1.3521,
+  "lon": 103.8198,
+  "altitude": 15,
+  "tz": "Asia/Singapore",
+  "installed_capacity_mwp": 2339,
+  "capacity_note": "EMA: grid-connected solar PV, end Q2 2026. Update each quarter.",
+  "fleet_tilt": 10,
+  "fleet_azimuth": 180,
+  "fleet_factor": 0.92,
+  "system_loss": 0.86,
+  "temp_coeff": -0.0035,
+  "albedo": 0.2,
+  "tracker_max_angle": 60,
+  "tracker_gcr": 0.35,
+  "demand_csv": "data/demand.csv",
+  "bench_kwp": 0.5,
+  "measured_csv": "data/measured.csv",
+  "train_days": 730,
+  "holdout_days": 30
+}

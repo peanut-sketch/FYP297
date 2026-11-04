@@ -1,0 +1,18 @@
+{
+	"folders": [
+		{
+			"path": "../../My project"
+		},
+		{
+			"path": ".."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.asset": "yaml",
+			"*.meta": "yaml",
+			"*.prefab": "yaml",
+			"*.unity": "yaml"
+		}
+	}
+}

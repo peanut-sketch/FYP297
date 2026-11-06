@@ -111,6 +111,12 @@ footer a { color: inherit; }
 .cf details { margin-top: 0; flex: 1; min-width: 0; }
 .cf .btn { flex: none; font-size: 12px; padding: 3px 9px; color: var(--ink-2); }
 @media (max-width: 520px) { .meta { text-align: left; } .hdr-r { align-items: flex-start; } .dl-panel { left: 0; right: auto; } .tile .val { font-size: 22px; } }
+.badge { display:inline-block; font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px; margin-left:8px; vertical-align:middle; border:1px solid var(--border); color:var(--ink-2); background:var(--page); letter-spacing:0; }
+.badge.real { border-color:var(--good); } .badge.modelled { border-color:var(--s1); }
+.badge.assumed { border-color:var(--warning); } .badge.illus { border-color:var(--critical); }
+.prov table { width:100%; table-layout:auto; border-collapse:collapse; font-size:12.5px; }
+.prov th, .prov td { white-space:normal; text-align:left; padding:6px 8px; border-top:1px solid var(--border); vertical-align:top; }
+.prov th { color:var(--ink-2); font-weight:600; border-top:0; }
 </style>
 </head>
 <body>
@@ -132,7 +138,7 @@ footer a { color: inherit; }
   <section class="tiles" id="tiles"></section>
 
   <section class="card full">
-    <h2>Fleet output</h2>
+    <h2>Fleet output <span class="badge modelled">Modelled</span></h2>
     <p class="desc" id="fleet-desc">Physics twin driven by the weather forecast, compared with the machine-learning forecast.</p>
     <div class="legend" id="fleet-leg"></div>
     <div class="chart" id="fleet"></div>
@@ -141,13 +147,13 @@ footer a { color: inherit; }
 
   <div class="grid2">
     <section class="card">
-      <h2>Solar share of system demand</h2>
+      <h2>Solar share of system demand <span class="badge illus">Illustrative demand</span></h2>
       <p class="desc" id="share-desc"></p>
       <div class="chart" id="share"></div>
       <div class="cf"><details><summary>Show data table</summary><div class="tbl" id="share-tbl"></div></details><button class="btn" data-k="twin" hidden>Download CSV</button></div>
     </section>
     <section class="card">
-      <h2>Fixed tilt vs single-axis tracker</h2>
+      <h2>Fixed tilt vs single-axis tracker <span class="badge assumed">Assumed set-up</span></h2>
       <p class="desc">Output per kWp installed. Trackers follow the sun east to west.</p>
       <div class="legend" id="track-leg"></div>
       <div class="chart" id="track"></div>
@@ -157,13 +163,13 @@ footer a { color: inherit; }
 
   <div class="grid2">
     <section class="card">
-      <h2>Forecast accuracy</h2>
+      <h2>Forecast accuracy <span class="badge modelled">Scored vs physics model</span></h2>
       <p class="desc" id="acc-desc"></p>
       <div id="acc"></div>
       <div class="cf"><details><summary>All metrics</summary><div class="tbl" id="acc-tbl"></div></details><button class="btn" data-k="metrics" hidden>Download CSV</button></div>
     </section>
     <section class="card">
-      <h2>Fault check</h2>
+      <h2>Fault check <span class="badge illus">Simulated faults</span></h2>
       <p class="desc">Measured bench output compared with what the twin expects.</p>
       <div id="faults"><div class="empty">Loading…</div></div>
       <div class="cf"><span></span><button class="btn" data-k="faults" hidden>Download CSV</button></div>
@@ -171,7 +177,7 @@ footer a { color: inherit; }
   </div>
 
   <section class="card full">
-    <h2>Household and commercial loads vs bench PV</h2>
+    <h2>Household and commercial loads vs bench PV <span class="badge illus">Illustrative loads</span></h2>
     <p class="desc" id="loads-desc"></p>
     <div class="grid2" style="margin:0">
       <div>
@@ -186,6 +192,21 @@ footer a { color: inherit; }
         <div class="cf"><details><summary>All results</summary><div class="tbl" id="ss-tbl"></div></details><button class="btn" data-k="results" hidden>Download CSV</button></div>
       </div>
     </div>
+  </section>
+
+  <section class="card full prov">
+    <h2>Where the data comes from</h2>
+    <p class="desc">No real panel or meter data is used yet. Green = real input; blue = calculated from real weather; yellow = our assumption; red = illustrative, not measured.</p>
+    <table>
+      <tr><th>Item</th><th>Status</th><th>Source and caveat</th></tr>
+      <tr><td>Weather</td><td><span class="badge real">Real</span></td><td>Open-Meteo forecast and archive. Coarse resolution; fast Singapore storm clouds are hard to forecast.</td></tr>
+      <tr><td>Installed capacity (2,339 MWp)</td><td><span class="badge real">Real</span></td><td>Energy Market Authority figure, set in config.json and updated quarterly.</td></tr>
+      <tr><td>Fleet output, yield, tracker comparison</td><td><span class="badge modelled">Modelled</span></td><td>pvlib physics model. Depends on assumed settings: fleet factor 0.92 (a guess), system loss 0.86 (generic default; measured rooftop values are often lower), 10&deg; south tilt, tracker (rare on Singapore rooftops, carried over from the Edinburgh design).</td></tr>
+      <tr><td>Machine-learning forecast and accuracy</td><td><span class="badge modelled">Modelled</span></td><td>Trained on, and scored against, our physics model (a proxy) because no bench readings exist yet. Real-panel accuracy is unknown.</td></tr>
+      <tr><td>System demand and solar share</td><td><span class="badge illus">Illustrative</span></td><td>A typical day shape, not EMA demand data. Real data and a demand forecast are planned.</td></tr>
+      <tr><td>Home and office loads, self-sufficiency</td><td><span class="badge illus">Illustrative</span></td><td>Generic profiles scaled to 1 kWh a day with a simple 1 kWh battery. A real flat uses roughly 10 kWh a day, so results show the idea, not a Singapore finding.</td></tr>
+      <tr><td>Fault check</td><td><span class="badge illus">Simulated</span></td><td>Four faults inserted into simulated data and found again. Works on total plant power; per-panel diagnosis needs sensors (planned).</td></tr>
+    </table>
   </section>
 
   <footer id="foot">Weather: <a href="https://open-meteo.com/">Open-Meteo</a>. Model: pvlib. Adapted from cindyiskandar/digital-twin-solar-pv.</footer>
@@ -388,7 +409,7 @@ async function main() {
   $("tiles").innerHTML = [
     ["Fleet energy today", nf(1).format(T.fleet_gwh), "GWh", `Tomorrow ${nf(1).format(M.fleet_gwh)} GWh`],
     ["Peak output today", nf(0).format(T.peak_mw), "MW", `${nf(0).format(T.peak_mw / cap * 100)}% of installed capacity`],
-    ["Peak solar share", nf(1).format(T.peak_share_pct), "%", "of system demand, today"],
+    ["Peak solar share", nf(1).format(T.peak_share_pct), "%", "of illustrative demand, today"],
     ["Specific yield today", nf(2).format(T.fixed_kwh_per_kwp), "kWh/kWp", `Tracker ${nf(2).format(T.tracker_kwh_per_kwp)} kWh/kWp`],
     ["Installed capacity", nf(0).format(cap), "MWp", esc(L.capacity_note || "")],
   ].map(([l, v, u, n]) => `<div class="tile"><div class="lab">${l}</div><div class="val">${v}<small>${u}</small></div><div class="note">${n}</div></div>`).join("");
